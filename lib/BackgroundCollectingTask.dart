@@ -1,5 +1,4 @@
 import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_bluetooth_serial/flutter_bluetooth_serial.dart';
 import 'package:scoped_model/scoped_model.dart';
@@ -20,9 +19,9 @@ class DataSample {
 
 class BackgroundCollectingTask extends Model {
   static BackgroundCollectingTask of(
-    BuildContext context, {
-    bool rebuildOnChange = false,
-  }) =>
+      BuildContext context, {
+        bool rebuildOnChange = false,
+      }) =>
       ScopedModel.of<BackgroundCollectingTask>(
         context,
         rebuildOnChange: rebuildOnChange,
@@ -30,13 +29,7 @@ class BackgroundCollectingTask extends Model {
 
   final BluetoothConnection _connection;
   List<int> _buffer = List<int>.empty(growable: true);
-
-  // @TODO , Such sample collection in real code should be delegated
-  // (via `Stream<DataSample>` preferably) and then saved for later
-  // displaying on chart (or even stright prepare for displaying).
-  // @TODO ? should be shrinked at some point, endless colleting data would cause memory shortage.
   List<DataSample> samples = List<DataSample>.empty(growable: true);
-
   bool inProgress = false;
 
   BackgroundCollectingTask._fromConnection(this._connection) {
@@ -44,22 +37,35 @@ class BackgroundCollectingTask extends Model {
       _buffer += data;
 
       while (true) {
-        // If there is a sample, and it is full sent
-        int index = _buffer.indexOf('t'.codeUnitAt(0));
-        if (index >= 0 && _buffer.length - index >= 7) {
-          final DataSample sample = DataSample(
-              temperature1: (_buffer[index + 1] + _buffer[index + 2] / 100),
-              temperature2: (_buffer[index + 3] + _buffer[index + 4] / 100),
-              waterpHlevel: (_buffer[index + 5] + _buffer[index + 6] / 100),
-              timestamp: DateTime.now());
-          _buffer.removeRange(0, index + 7);
+        // '\n'을 찾아서 데이터의 끝을 확인
+        int index = _buffer.indexOf('\n'.codeUnitAt(0));
+        if (index >= 0) {
+          // 데이터 문자열을 파싱
+          String dataString = utf8.decode(_buffer.sublist(0, index));
+          _buffer.removeRange(0, index + 1);
 
-          samples.add(sample);
-          notifyListeners(); // Note: It shouldn't be invoked very often - in this example data comes at every second, but if there would be more data, it should update (including repaint of graphs) in some fixed interval instead of after every sample.
-          //print("${sample.timestamp.toString()} -> ${sample.temperature1} / ${sample.temperature2}");
-        }
-        // Otherwise break
-        else {
+          if (dataString.startsWith('t')) {
+            List<String> parts = dataString.substring(1).split(',');
+            if (parts.length == 3) {
+              try {
+                double temperature1 = double.parse(parts[0]);
+                double temperature2 = double.parse(parts[1]);
+                double waterpHlevel = double.parse(parts[2]);
+                final DataSample sample = DataSample(
+                  temperature1: temperature1,
+                  temperature2: temperature2,
+                  waterpHlevel: waterpHlevel,
+                  timestamp: DateTime.now(),
+                );
+
+                samples.add(sample);
+                notifyListeners();
+              } catch (e) {
+                print('Error parsing data: $e');
+              }
+            }
+          }
+        } else {
           break;
         }
       }
@@ -69,10 +75,8 @@ class BackgroundCollectingTask extends Model {
     });
   }
 
-  static Future<BackgroundCollectingTask> connect(
-      BluetoothDevice server) async {
-    final BluetoothConnection connection =
-        await BluetoothConnection.toAddress(server.address);
+  static Future<BackgroundCollectingTask> connect(BluetoothDevice server) async {
+    final BluetoothConnection connection = await BluetoothConnection.toAddress(server.address);
     return BackgroundCollectingTask._fromConnection(connection);
   }
 
@@ -103,7 +107,7 @@ class BackgroundCollectingTask extends Model {
     await _connection.output.allSent;
   }
 
-  Future<void> reasume() async {
+  Future<void> resume() async {
     inProgress = true;
     notifyListeners();
     _connection.output.add(ascii.encode('start'));

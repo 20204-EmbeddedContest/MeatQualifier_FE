@@ -76,7 +76,7 @@ class BackgroundCollectedPage extends StatelessWidget {
             (task.inProgress
                 ? IconButton(icon: Icon(Icons.pause), onPressed: task.pause)
                 : IconButton(
-                    icon: Icon(Icons.play_arrow), onPressed: task.reasume)),
+                    icon: Icon(Icons.play_arrow), onPressed: task.resume)),
           ],
         ),
         body: ListView(
