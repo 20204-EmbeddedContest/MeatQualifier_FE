@@ -1,5 +1,4 @@
 import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_bluetooth_serial/flutter_bluetooth_serial.dart';
 import 'package:scoped_model/scoped_model.dart';
@@ -16,7 +15,6 @@ class MainPage extends StatefulWidget {
 
 class _MainPage extends State<MainPage> {
   BluetoothState _bluetoothState = BluetoothState.UNKNOWN;
-
   BackgroundCollectingTask? _collectingTask;
 
   @override
@@ -30,9 +28,7 @@ class _MainPage extends State<MainPage> {
       });
     });
 
-    FlutterBluetoothSerial.instance
-        .onStateChanged()
-        .listen((BluetoothState state) {
+    FlutterBluetoothSerial.instance.onStateChanged().listen((BluetoothState state) {
       setState(() {
         _bluetoothState = state;
       });
@@ -52,8 +48,8 @@ class _MainPage extends State<MainPage> {
       appBar: AppBar(
         title: const Text('Flutter Bluetooth Serial'),
       ),
-      body: Container(
-        child: ListView(
+      body: SingleChildScrollView(
+        child: Column(
           children: <Widget>[
             ListTile(
               title: Row(
@@ -62,12 +58,10 @@ class _MainPage extends State<MainPage> {
                   ElevatedButton(
                     child: const Text('Connect to paired device to chat'),
                     onPressed: () async {
-                      final BluetoothDevice? selectedDevice =
-                      await Navigator.of(context).push(
+                      final BluetoothDevice? selectedDevice = await Navigator.of(context).push(
                         MaterialPageRoute(
                           builder: (context) {
-                            return SelectBondedDevicePage(
-                                checkAvailability: false);
+                            return SelectBondedDevicePage(checkAvailability: false);
                           },
                         ),
                       );
@@ -81,22 +75,18 @@ class _MainPage extends State<MainPage> {
                     },
                   ),
                   ElevatedButton(
-                    child: Icon(_collectingTask?.inProgress ?? false
-                        ? Icons.bluetooth_disabled
-                        : Icons.bluetooth),
+                    child: Icon(_collectingTask?.inProgress ?? false ? Icons.bluetooth_disabled : Icons.bluetooth),
                     onPressed: () async {
                       if (_collectingTask?.inProgress ?? false) {
                         await _collectingTask!.cancel();
                         setState(() {
-                          /* Update for `_collectingTask.inProgress` */
+                          _collectingTask = null; // Update for `_collectingTask.inProgress`
                         });
                       } else {
-                        final BluetoothDevice? selectedDevice =
-                        await Navigator.of(context).push(
+                        final BluetoothDevice? selectedDevice = await Navigator.of(context).push(
                           MaterialPageRoute(
                             builder: (context) {
-                              return SelectBondedDevicePage(
-                                  checkAvailability: false);
+                              return SelectBondedDevicePage(checkAvailability: false);
                             },
                           ),
                         );
@@ -104,7 +94,7 @@ class _MainPage extends State<MainPage> {
                         if (selectedDevice != null) {
                           await _startBackgroundTask(context, selectedDevice);
                           setState(() {
-                            /* Update for `_collectingTask.inProgress` */
+                            // Update for `_collectingTask.inProgress`
                           });
                         }
                       }
@@ -130,6 +120,18 @@ class _MainPage extends State<MainPage> {
                   );
                 }
                     : null,
+              ),
+            ),
+            SizedBox(height: 20),
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: <Widget>[
+                  _buildImageWithLabel('assets/images/sirloin.jpeg', 'Sirloin'),
+                  _buildImageWithLabel('assets/images/tenderloin.jpeg', 'Tenderloin'),
+                  _buildImageWithLabel('assets/images/tongue.jpeg', 'Tongue'),
+                  _buildImageWithLabel('assets/images/striploin.jpeg', 'Striploin'),
+                ],
               ),
             ),
           ],
@@ -167,8 +169,8 @@ class _MainPage extends State<MainPage> {
             title: const Text('Error occurred while connecting'),
             content: Text("${ex.toString()}"),
             actions: <Widget>[
-              new TextButton(
-                child: new Text("Close"),
+              TextButton(
+                child: const Text("Close"),
                 onPressed: () {
                   Navigator.of(context).pop();
                 },
@@ -178,5 +180,55 @@ class _MainPage extends State<MainPage> {
         },
       );
     }
+  }
+
+  Widget _buildImageWithLabel(String imagePath, String label) {
+    return Container(
+      width: 150,
+      margin: EdgeInsets.symmetric(horizontal: 10),
+      decoration: BoxDecoration(
+        color: Colors.white, // 흰색 배경
+        borderRadius: BorderRadius.circular(8), // 둥근 모서리
+        border: Border.all(
+          color: Colors.grey, // 테두리 색상
+          width: 1, // 테두리 두께
+        ),
+      ),
+      child: Column(
+        children: [
+          Container(
+            width: double.infinity,
+            height: 120,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(8)),
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.vertical(top: Radius.circular(8)),
+              child: Image.asset(
+                imagePath,
+                fit: BoxFit.cover,
+              ),
+            ),
+          ),
+          SizedBox(height: 8), // 이미지와 텍스트 사이의 간격
+          Container(
+            padding: EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: Colors.white, // 흰색 배경
+              borderRadius: BorderRadius.vertical(bottom: Radius.circular(8)),
+            ),
+            child: Text(
+              label,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
