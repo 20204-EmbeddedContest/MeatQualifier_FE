@@ -45,8 +45,10 @@ class _MainPage extends State<MainPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
-        title: const Text('Flutter Bluetooth Serial'),
+        title: const Text('BBQ ZONE'),
+        backgroundColor: Colors.white,
       ),
       body: SingleChildScrollView(
         child: Column(
@@ -127,10 +129,34 @@ class _MainPage extends State<MainPage> {
               scrollDirection: Axis.horizontal,
               child: Row(
                 children: <Widget>[
-                  _buildImageWithLabel('assets/images/sirloin.jpeg', 'Sirloin'),
-                  _buildImageWithLabel('assets/images/tenderloin.jpeg', 'Tenderloin'),
-                  _buildImageWithLabel('assets/images/tongue.jpeg', 'Tongue'),
-                  _buildImageWithLabel('assets/images/striploin.jpeg', 'Striploin'),
+                  _buildStyledCard(
+                    'assets/images/sirloin.jpeg',
+                    'Sirloin (牛)',
+                    '국내산',
+                    '2024.07.24',
+                    '100',
+                  ),
+                  _buildStyledCard(
+                    'assets/images/tenderloin.jpeg',
+                    'Tenderloin (牛)',
+                    '국내산',
+                    '2024.07.24',
+                    '100',
+                  ),
+                  _buildStyledCard(
+                    'assets/images/tongue.jpeg',
+                    'Tongue (牛)',
+                    '국내산',
+                    '2024.07.24',
+                    '100',
+                  ),
+                  _buildStyledCard(
+                    'assets/images/striploin.jpeg',
+                    'Striploin (牛)',
+                    '국내산',
+                    '2024.07.24',
+                    '100',
+                  ),
                 ],
               ),
             ),
@@ -182,52 +208,84 @@ class _MainPage extends State<MainPage> {
     }
   }
 
-  Widget _buildImageWithLabel(String imagePath, String label) {
-    return Container(
-      width: 150,
-      margin: EdgeInsets.symmetric(horizontal: 10),
-      decoration: BoxDecoration(
-        color: Colors.white, // 흰색 배경
-        borderRadius: BorderRadius.circular(8), // 둥근 모서리
-        border: Border.all(
-          color: Colors.grey, // 테두리 색상
-          width: 1, // 테두리 두께
-        ),
-      ),
-      child: Column(
-        children: [
-          Container(
-            width: double.infinity,
-            height: 120,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.vertical(top: Radius.circular(8)),
+  Widget _buildStyledCard(
+      String imagePath, String title, String origin, String purchaseDate, String quantity) {
+    return Padding(
+      padding: const EdgeInsets.all(8.0),
+      child: Container(
+        width: 160, // 원하는 크기로 조정 가능
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16), // 전체 모서리를 둥글게
+          border: Border.all(
+            color: Colors.grey.shade300, // 테두리 색상
+            width: 1, // 테두리 두께
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.withOpacity(0.5),
+              spreadRadius: 2,
+              blurRadius: 5,
+              offset: Offset(0, 3), // 그림자 위치
             ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.vertical(top: Radius.circular(8)),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.vertical(top: Radius.circular(16)), // 상단 모서리 둥글게
               child: Image.asset(
                 imagePath,
+                width: double.infinity,
+                height: 140,  // 이미지 높이
                 fit: BoxFit.cover,
               ),
             ),
-          ),
-          SizedBox(height: 8), // 이미지와 텍스트 사이의 간격
-          Container(
-            padding: EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: Colors.white, // 흰색 배경
-              borderRadius: BorderRadius.vertical(bottom: Radius.circular(8)),
-            ),
-            child: Text(
-              label,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
+            SizedBox(height: 10),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Text(
+                    title,
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  SizedBox(height: 6),
+                  Text(
+                    '생산지: $origin',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.grey.shade600,
+                    ),
+                  ),
+                  SizedBox(height: 4),
+                  Text(
+                    '구입일: $purchaseDate',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.grey.shade600,
+                    ),
+                  ),
+                  SizedBox(height: 4),
+                  Text(
+                    '정수: $quantity',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.grey.shade600,
+                    ),
+                  ),
+                ],
               ),
             ),
-          ),
-        ],
+            SizedBox(height: 12), // 마지막 텍스트와 아래 간격
+          ],
+        ),
       ),
     );
   }
