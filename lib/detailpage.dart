@@ -39,7 +39,7 @@ class DetailPage extends StatelessWidget {
         ],
       ),
       body: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(32.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
@@ -100,97 +100,140 @@ class DetailPage extends StatelessWidget {
               ],
             ),
             SizedBox(height: 30),
-            Text(
-              '신선도',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-            ),
-            SizedBox(height: 10),
-            // 차트 위젯을 감싸는 SizedBox
-            SizedBox(
-              height: 200,
-              child: LineChart(
-                LineChartData(
-                  gridData: FlGridData(
-                    show: true,
-                    drawVerticalLine: true,
-                    getDrawingHorizontalLine: (value) {
-                      return FlLine(
-                        color: Colors.grey.withOpacity(0.5),
-                        strokeWidth: 1,
-                      );
-                    },
-                    getDrawingVerticalLine: (value) {
-                      return FlLine(
-                        color: Colors.grey.withOpacity(0.5),
-                        strokeWidth: 1,
-                      );
-                    },
-                  ),
-                  titlesData: FlTitlesData(
-                    show: true,
-                    bottomTitles: AxisTitles(
-                      sideTitles: SideTitles(
-                        showTitles: true,
-                        reservedSize: 30,
-                        getTitlesWidget: (value, meta) {
-                          switch (value.toInt()) {
-                            case 0:
-                              return Text('0');
-                            case 1:
-                              return Text('1');
-                            case 2:
-                              return Text('2');
-                          }
-                          return Text('');
-                        },
-                      ),
-                    ),
-                    leftTitles: AxisTitles(
-                      sideTitles: SideTitles(
-                        showTitles: true,
-                        reservedSize: 30,
-                        getTitlesWidget: (value, meta) {
-                          return Text(value.toInt().toString());
-                        },
-                      ),
-                    ),
-                  ),
-                  borderData: FlBorderData(
-                    show: true,
-                    border: Border.all(color: Colors.grey, width: 1),
-                  ),
-                  minX: 0,
-                  maxX: (freshnessData.length - 1).toDouble(),
-                  minY: 0,
-                  maxY: 100,
-                  lineBarsData: [
-                    LineChartBarData(
-                      spots: freshnessData
-                          .asMap()
-                          .entries
-                          .map((entry) =>
-                          FlSpot(entry.key.toDouble(), entry.value.toDouble()))
-                          .toList(),
-                      isCurved: true,
-                      color: Colors.red,
-                      barWidth: 4,
-                      isStrokeCapRound: true,
-                      dotData: FlDotData(
-                        show: true,
-                        getDotPainter: (spot, percent, barData, index) =>
-                            FlDotCirclePainter(
-                              radius: 4,
-                              color: Colors.red,
-                              strokeWidth: 2,
-                              strokeColor: Colors.white,
-                            ),
-                      ),
-                      belowBarData: BarAreaData(show: false),
-                    ),
-                  ],
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Text(
+                  '신선도',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
                 ),
-              ),
-            ),
+                SizedBox(height: 10),
+                Padding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 20.0), // 좌우 여백을 줄임
+                  child: SizedBox(
+                    height: 150, // 그래프 높이
+                    child: Stack(
+                      children: [
+                        LineChart(
+                          LineChartData(
+                            gridData: FlGridData(
+                              show: false,
+                            ),
+                            titlesData: FlTitlesData(
+                              show: false,
+                            ),
+                            borderData: FlBorderData(
+                              show: true,
+                              border: Border(
+                                bottom: BorderSide(
+                                  color: Colors.grey,
+                                  width: 1,
+                                ),
+                                left: BorderSide(
+                                  color: Colors.transparent,
+                                ),
+                                right: BorderSide(
+                                  color: Colors.transparent,
+                                ),
+                                top: BorderSide(
+                                  color: Colors.transparent,
+                                ),
+                              ),
+                            ),
+                            minX: 0,
+                            maxX: freshnessData.length - 1,
+                            minY: 0,
+                            maxY: 100,
+                            lineBarsData: [
+                              LineChartBarData(
+                                spots: freshnessData
+                                    .asMap()
+                                    .entries
+                                    .map((entry) => FlSpot(entry.key.toDouble(),
+                                        entry.value.toDouble()))
+                                    .toList(),
+                                isCurved: false,
+                                color: Colors.red,
+                                barWidth: 2,
+                                isStrokeCapRound: true,
+                                dotData: FlDotData(
+                                  show: true,
+                                  getDotPainter:
+                                      (spot, percent, barData, index) {
+                                    return FlDotCirclePainter(
+                                      radius: 4,
+                                      color: Colors.white,
+                                      strokeWidth: 2,
+                                      strokeColor: Colors.red,
+                                    );
+                                  },
+                                ),
+                                belowBarData: BarAreaData(
+                                  show: true,
+                                  color: Colors.red.withOpacity(0.3),
+                                  gradient: LinearGradient(
+                                    colors: [
+                                      Colors.red.withOpacity(0.3),
+                                      Colors.red.withOpacity(0),
+                                    ],
+                                    begin: Alignment.topCenter,
+                                    end: Alignment.bottomCenter,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Positioned.fill(
+                          child: LayoutBuilder(
+                            builder: (context, constraints) {
+                              return Stack(
+                                children:
+                                    freshnessData.asMap().entries.map((entry) {
+                                  double xPosition = constraints.maxWidth /
+                                      (freshnessData.length - 1) *
+                                      entry.key;
+                                  double yPosition = constraints.maxHeight -
+                                      (entry.value.toDouble() /
+                                          100 *
+                                          constraints.maxHeight) -
+                                      12;
+
+                                  // 왼쪽 끝 점일 경우
+                                  if (entry.key == 0) {
+                                    xPosition = xPosition + 20; // 왼쪽으로 더 많이 이동
+                                  }
+                                  // 오른쪽 끝 점일 경우
+                                  else if (entry.key ==
+                                      freshnessData.length - 1) {
+                                    xPosition = xPosition - 20; // 오른쪽으로 약간 이동
+                                  }
+
+                                  return Positioned(
+                                    left: xPosition,
+                                    top: yPosition -
+                                        20, // top 값을 조정하여 점 바로 위에 텍스트 배치
+                                    child: Text(
+                                      entry.value.toString(),
+                                      style: TextStyle(
+                                        color: Colors.black,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 14,
+                                      ),
+                                    ),
+                                  );
+                                }).toList(),
+                              );
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                )
+              ],
+            )
           ],
         ),
       ),
