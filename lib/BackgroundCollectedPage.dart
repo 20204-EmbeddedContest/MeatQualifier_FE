@@ -117,7 +117,7 @@ class BackgroundCollectedPage extends StatelessWidget {
             Divider(),
             ListTile(
               leading: const Icon(Icons.filter_vintage),
-              title: const Text('Water pH level'),
+              title: const Text('Water pH leve'),
             ),
             LineChart(
               constraints: const BoxConstraints.expand(height: 200),

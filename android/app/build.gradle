@@ -25,7 +25,7 @@ if (flutterVersionName == null) {
 
 android {
     namespace = "com.example.bbq_ble"
-    compileSdkVersion 33 // 직접 버전 번호 설정
+    compileSdkVersion 34 // 직접 버전 번호 설정
     ndkVersion = localProperties.getProperty('flutter.ndkVersion', '21.1.6352462') // ndkVersion 설정 (기본값 제공)
 
     compileOptions {
@@ -36,7 +36,7 @@ android {
     defaultConfig {
         applicationId = "com.example.bbq_ble"
         minSdkVersion 21 // 직접 버전 번호 설정
-        targetSdkVersion 33 // 직접 버전 번호 설정
+        targetSdkVersion 34 // 직접 버전 번호 설정
         versionCode = flutterVersionCode.toInteger()
         versionName = flutterVersionName
     }
