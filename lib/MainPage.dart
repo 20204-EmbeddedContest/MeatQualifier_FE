@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bluetooth_serial/flutter_bluetooth_serial.dart';
 import 'package:scoped_model/scoped_model.dart';
@@ -17,6 +16,9 @@ class MainPage extends StatefulWidget {
 class _MainPage extends State<MainPage> {
   BluetoothState _bluetoothState = BluetoothState.UNKNOWN;
   BackgroundCollectingTask? _collectingTask;
+  bool _showExpandedBox = false; // 흰색 박스 확장 상태
+  BluetoothDevice? _connectedDevice; // 현재 연결된 디바이스
+  String _deviceName = '연결되지 않음'; // 기본 상태 텍스트
 
   @override
   void initState() {
@@ -45,19 +47,23 @@ class _MainPage extends State<MainPage> {
 
   @override
   Widget build(BuildContext context) {
+    final double paddingSize = 37.8; // 10mm in pixels
+    final double screenWidth = MediaQuery.of(context).size.width;
+    final double screenHeight = MediaQuery.of(context).size.height;
+
     return Scaffold(
       body: Stack(
         children: [
           // Bottom half (white background)
           Positioned.fill(
-            bottom: MediaQuery.of(context).size.height / 2,
+            bottom: screenHeight / 2,
             child: Container(
               color: Colors.white,
             ),
           ),
           // Top half (gradient background)
           Positioned.fill(
-            top: MediaQuery.of(context).size.height / 2,
+            top: screenHeight / 2,
             child: Container(
               decoration: BoxDecoration(
                 gradient: LinearGradient(
@@ -102,22 +108,11 @@ class _MainPage extends State<MainPage> {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: <Widget>[
                             ElevatedButton(
-                              child: const Text('Connect to paired device to chat'),
+                              child: Text(_deviceName),
                               onPressed: () async {
-                                final BluetoothDevice? selectedDevice = await Navigator.of(context).push(
-                                  MaterialPageRoute(
-                                    builder: (context) {
-                                      return SelectBondedDevicePage(checkAvailability: false);
-                                    },
-                                  ),
-                                );
-
-                                if (selectedDevice != null) {
-                                  print('Connect -> selected ' + selectedDevice.address);
-                                  _startChat(context, selectedDevice);
-                                } else {
-                                  print('Connect -> no device selected');
-                                }
+                                setState(() {
+                                  _showExpandedBox = true; // 박스 열기
+                                });
                               },
                             ),
                           ],
@@ -125,7 +120,7 @@ class _MainPage extends State<MainPage> {
                       ),
                       ListTile(
                         title: ElevatedButton(
-                          child: const Text('View background collected data'),
+                          child: Text('View background collected data'),
                           onPressed: (_collectingTask != null)
                               ? () {
                             Navigator.of(context).push(
@@ -180,110 +175,155 @@ class _MainPage extends State<MainPage> {
                         ),
                       ),
                       SizedBox(height: 20),
-                      // Padding container for space above the white box
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 10.0), // Add space below the button
-                        child: Container(
-                          width: double.infinity,
-                          height: 200, // Adjust height if needed
-                          padding: EdgeInsets.symmetric(horizontal: 40.0), // 좌우 여백
-                          child: Container(
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(16),
-                              border: Border.all(
-                                color: Colors.grey.shade300,
-                                width: 1,
-                              ),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withOpacity(0.1), // 그림자 색상
-                                  spreadRadius: 3, // 그림자 크기 조절
-                                  blurRadius: 6, // 흐림 정도 조절
-                                  offset: Offset(0, 4), // 그림자의 위치 조절
-                                ),
-                              ],
-                            ),
-                            child: Center(
-                              child: ElevatedButton(
-                                onPressed: () async {
-                                  if (_collectingTask?.inProgress ?? false) {
-                                    await _collectingTask!.cancel();
-                                    setState(() {
-                                      _collectingTask = null; // Update for `_collectingTask.inProgress`
-                                    });
-                                  } else {
-                                    final BluetoothDevice? selectedDevice = await Navigator.of(context).push(
-                                      MaterialPageRoute(
-                                        builder: (context) {
-                                          return SelectBondedDevicePage(checkAvailability: false);
-                                        },
-                                      ),
-                                    );
-
-                                    if (selectedDevice != null) {
-                                      await _startBackgroundTask(context, selectedDevice);
-                                      setState(() {
-                                        // Update for `_collectingTask.inProgress`
-                                      });
-                                    }
-                                  }
-                                },
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(Icons.bluetooth, color: Colors.black),
-                                    SizedBox(width: 10),
-                                    Text('연결하기'),
-                                  ],
-                                ),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.white, // 버튼 배경색 흰색
-                                  foregroundColor: Colors.black, // 버튼 텍스트 색상 검정색
-                                  padding: EdgeInsets.symmetric(horizontal: 30.0, vertical: 10.0), // 버튼 크기 조절
-                                  side: BorderSide(color: Colors.black), // 검정 테두리
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
                     ],
                   ),
                 ),
               ),
             ],
           ),
+          // 흰색 박스
+          Positioned(
+            bottom: 0,
+            left: 0,
+            right: 0,
+            child: AnimatedContainer(
+              duration: Duration(milliseconds: 300),
+              height: _showExpandedBox ? screenHeight / 2 : 200,
+              padding: EdgeInsets.symmetric(horizontal: paddingSize, vertical: 20), // 좌우 여백 및 아래 여백
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+                border: Border.all(
+                  color: Colors.grey.shade300,
+                  width: 1,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1), // 그림자 색상
+                    spreadRadius: 3, // 그림자 크기 조절
+                    blurRadius: 6, // 흐림 정도 조절
+                    offset: Offset(0, -2), // 그림자의 위치 조절
+                  ),
+                ],
+              ),
+              child: _showExpandedBox
+                  ? Column(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Text(
+                      '연결가능한 기기',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  Expanded(child: _buildBluetoothDeviceList()),
+                ],
+              )
+                  : Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  if (_connectedDevice == null) // 연결된 디바이스가 없을 때만 표시
+                    ElevatedButton(
+                      onPressed: () {
+                        setState(() {
+                          _showExpandedBox = true; // 박스 열기
+                        });
+                        // 블루투스 연결 로직을 여기에 추가
+                      },
+                      child: Text('연결되지 않음'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.white, // 버튼 배경색 흰색
+                        foregroundColor: Colors.black, // 버튼 텍스트 색상 검정색
+                        padding: EdgeInsets.symmetric(horizontal: 30.0, vertical: 10.0), // 버튼 크기 조절
+                        side: BorderSide(color: Colors.black), // 검정 테두리
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                    ),
+                  SizedBox(height: 20),
+                  if (_connectedDevice != null) // 연결된 디바이스가 있을 때만 표시
+                    Text(
+                      '연결된 디바이스: ${_connectedDevice!.name ?? 'Unknown Device'}',
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    ),
+                ],
+              ),
+            ),
+          ),
         ],
       ),
     );
   }
 
-  void _startChat(BuildContext context, BluetoothDevice server) {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) {
-          return ChatPage(server: server);
-        },
-      ),
+  Widget _buildBluetoothDeviceList() {
+    return FutureBuilder<List<BluetoothDevice>>(
+      future: FlutterBluetoothSerial.instance.getBondedDevices(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return Center(child: CircularProgressIndicator());
+        } else if (snapshot.hasError) {
+          return Center(child: Text('Error: ${snapshot.error}'));
+        } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+          return Center(child: Text('No paired devices found'));
+        } else {
+          final devices = snapshot.data!;
+          return ListView.builder(
+            itemCount: devices.length,
+            itemBuilder: (context, index) {
+              final device = devices[index];
+              return ListTile(
+                title: Text(
+                  device.name ?? 'Unknown Device',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                subtitle: SizedBox.shrink(), // 주소 숨기기
+                trailing: ElevatedButton(
+                  onPressed: () async {
+                    await _handleConnectButtonPressed(device);
+                  },
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.bluetooth,
+                        color: Colors.black,
+                      ),
+                      SizedBox(width: 8), // 아이콘과 텍스트 사이의 간격
+                      Text('연결하기'),
+                    ],
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.white, // 버튼 배경색 흰색
+                    foregroundColor: Colors.black, // 버튼 텍스트 색상 검정색
+                    padding: EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0), // 버튼 크기 조절
+                    side: BorderSide(color: Colors.black), // 검정 테두리
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                ),
+              );
+            },
+          );
+        }
+      },
     );
   }
 
-  Future<void> _startBackgroundTask(
-      BuildContext context,
-      BluetoothDevice server,
-      ) async {
+  Future<void> _handleConnectButtonPressed(BluetoothDevice device) async {
     try {
-      _collectingTask = await BackgroundCollectingTask.connect(server);
-      print('Connected to background task');
-      await _collectingTask!.start();
-      print('Background task started');
+      await _startBackgroundTask(context, device);
+      setState(() {
+        _showExpandedBox = false; // 박스 닫기
+        _deviceName = device.name ?? '연결된 디바이스'; // 연결된 디바이스명 업데이트
+        _connectedDevice = device; // 연결된 디바이스 저장
+      });
     } catch (ex) {
       print('Error during background task: $ex');
-      _collectingTask?.cancel();
       showDialog(
         context: context,
         builder: (BuildContext context) {
@@ -301,6 +341,19 @@ class _MainPage extends State<MainPage> {
           );
         },
       );
+    }
+  }
+
+  Future<void> _startBackgroundTask(BuildContext context, BluetoothDevice server) async {
+    try {
+      _collectingTask = await BackgroundCollectingTask.connect(server);
+      print('Connected to background task');
+      await _collectingTask!.start();
+      print('Background task started');
+    } catch (ex) {
+      print('Error during background task: $ex');
+      _collectingTask?.cancel();
+      rethrow;
     }
   }
 
@@ -391,7 +444,7 @@ class _MainPage extends State<MainPage> {
         onTap: () {
           Navigator.of(context).push(
             MaterialPageRoute(
-              builder: (context) => AddPage(), // AddPage로 네비게이션
+              builder: (context) => AddPage(),
             ),
           );
         },
