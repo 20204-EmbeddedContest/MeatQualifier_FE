@@ -44,7 +44,6 @@ class _MainPage extends State<MainPage> {
     _collectingTask?.dispose();
     super.dispose();
   }
-
   @override
   Widget build(BuildContext context) {
     final double paddingSize = 37.8; // 10mm in pixels
@@ -246,9 +245,35 @@ class _MainPage extends State<MainPage> {
                     ),
                   SizedBox(height: 20),
                   if (_connectedDevice != null) // 연결된 디바이스가 있을 때만 표시
-                    Text(
-                      '연결된 디바이스: ${_connectedDevice!.name ?? 'Unknown Device'}',
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.bluetooth,
+                          size: 30, // 아이콘 크기 설정
+                          color: Colors.blue,
+                        ),
+                        SizedBox(width: 16), // 아이콘과 텍스트 사이의 간격
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start, // 텍스트를 왼쪽으로 정렬
+                          children: [
+                            Text(
+                              '${_connectedDevice!.name ?? 'Unknown Device'}',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            SizedBox(height: 4), // 디바이스명과 배터리 상태 사이의 간격
+                            Text(
+                              '배터리: 64%',
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: Colors.grey.shade700,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
                     ),
                 ],
               ),
